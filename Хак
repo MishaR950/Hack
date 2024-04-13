@@ -1,0 +1,110 @@
+from datasets import load_dataset
+
+dataset = load_dataset("DynamicSuperbPrivate/SpoofDetection_ASVspoof2015", cache_dir = './')
+from datasets import load_dataset
+
+# Загрузка датасета
+dataset = load_dataset("DynamicSuperbPrivate/SpoofDetection_ASVspoof2015")
+
+# Просмотр доступных разделов датасета
+print(dataset.keys())
+
+print(dataset["train"][:5])
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Функция для построения спектрограммы
+def plot_spectrogram(audio_array, sampling_rate):
+    plt.figure(figsize=(10, 4))
+    spec, freqs, t, im = plt.specgram(audio_array, NFFT=2048, Fs=sampling_rate, noverlap=512, cmap='viridis')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Frequency (Hz)')
+    plt.title('Spectrogram')
+    plt.colorbar(im).set_label('Intensity (dB)')
+    plt.show()
+
+# Выберем первый аудиофайл из датасета
+audio_info = dataset["train"][0]
+
+# Извлекаем аудиоданные и частоту дискретизации
+audio_array = audio_info["audio"]["array"]
+sampling_rate = audio_info["audio"]["sampling_rate"]
+
+# Строим спектрограмму
+plot_spectrogram(audio_array, sampling_rate)
+import random
+
+# Выбираем случайный аудиофайл из датасета
+random_audio_index = random.randint(0, len(dataset["train"]) - 1)
+random_audio_info = dataset["train"][random_audio_index]
+
+# Извлекаем аудиоданные и частоту дискретизации
+audio_array = random_audio_info["audio"]["array"]
+sampling_rate = random_audio_info["audio"]["sampling_rate"]
+
+# Строим спектрограмму
+plot_spectrogram(audio_array, sampling_rate)
+import random
+
+# Выбираем случайный аудиофайл из датасета
+random_audio_index = random.randint(0, len(dataset["train"]) - 1)
+random_audio_info = dataset["train"][random_audio_index]
+
+# Извлекаем аудиоданные, частоту дискретизации и метку (authentic или spoofed)
+audio_array = random_audio_info["audio"]["array"]
+sampling_rate = random_audio_info["audio"]["sampling_rate"]
+label = random_audio_info["label"]
+
+# Определяем, является ли аудиофайл подлинным или нет
+authenticity = "Authentic" if label == "authentic" else "Spoofed"
+
+# Строим спектрограмму
+plot_spectrogram(audio_array, sampling_rate)
+
+# Выводим информацию о подлинности аудиофайла
+print("Audio File:", random_audio_info["file"])
+print("Authenticity:", authenticity)
+import matplotlib.pyplot as plt
+import librosa.display
+
+def plot_spectrogram(audio_array, sampling_rate, title=None):
+    plt.figure(figsize=(10, 4))
+    spectrogram = librosa.feature.melspectrogram(y=audio_array, sr=sampling_rate)
+    librosa.display.specshow(librosa.power_to_db(spectrogram, ref=np.max), y_axis='mel', fmax=8000, x_axis='time')
+    plt.colorbar(format='%+2.0f dB')
+    plt.title(title if title else 'Spectrogram')
+    plt.show()
+
+# Пройдемся по всем аудиофайлам в датасете
+for i, audio_info in enumerate(dataset["train"]):
+    audio_array = audio_info["audio"]["array"]
+    sampling_rate = audio_info["audio"]["sampling_rate"]
+    label = audio_info["label"]
+    authenticity = "Authentic" if label == "authentic" else "Spoofed"
+
+    # Построим спектрограмму
+    plot_spectrogram(audio_array, sampling_rate, title=f'Audio File {i+1}, {authenticity}')
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+
+# Создание модели
+model = Sequential()
+
+# Добавление сверточного слоя с 32 фильтрами и размером окна 3x3
+model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(None, None, 1)))
+
+# Добавление слоя максимального пулинга с размером окна 2x2
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+# Добавление слоя Flatten для преобразования признаков в векторы
+model.add(Flatten())
+
+# Добавление полносвязных слоев
+model.add(Dense(64, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+
+# Компиляция модели
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Обучение модели
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
